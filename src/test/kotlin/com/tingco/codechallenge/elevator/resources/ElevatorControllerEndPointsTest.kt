@@ -1,10 +1,11 @@
 package com.tingco.codechallenge.elevator.resources
 
-import org.junit.Assert
-import org.junit.Test
+import com.tingco.codechallenge.elevator.config.ElevatorApplication
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner
 
 /**
@@ -13,13 +14,13 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner
  * @author Sven Wesley
  */
 @RunWith(SpringJUnit4ClassRunner::class)
-@SpringBootApplication
+@SpringBootTest(classes = [ElevatorApplication::class])
 class ElevatorControllerEndPointsTest {
     @Autowired
     private lateinit var endPoints: ElevatorControllerEndPoints
 
     @Test
     fun ping() {
-        Assert.assertEquals("pong", endPoints.ping())
+        assertEquals("pong", endPoints.ping())
     }
 }
