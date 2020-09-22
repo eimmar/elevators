@@ -6,12 +6,14 @@ import com.tingco.codechallenge.elevator.api.Elevator.Direction
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 
 @ExperimentalCoroutinesApi
 class BaseElevator(
         private val _id: Int,
         private val elevatorFloorTravelDurationMs: Long,
         private val elevatorScope: CoroutineScope,
+        private val elevatorJob: Job
 ) : Elevator {
     sealed class Command {
         data class MoveToFloor(val floorNumber: Int) : Command()
@@ -31,15 +33,15 @@ class BaseElevator(
     private val _outputChannel = BroadcastChannel<OutputMessage>(10000)
 
     init {
-        elevatorScope.launch {
-            while (isActive) {
-                when (val command = commandChannel.receive()) {
+        elevatorScope.launch(elevatorJob) {
+            commandChannel.consumeEach {
+                when (it) {
                     is Command.MoveToFloor -> {
-                        direction = if (currentFloor > command.floorNumber) Direction.DOWN else Direction.UP
-                        addressedFloor = command.floorNumber
+                        direction = if (currentFloor > it.floorNumber) Direction.DOWN else Direction.UP
+                        addressedFloor = it.floorNumber
 
                         _outputChannel.send(OutputMessage.IsAtFloor(currentFloor, id))
-                        while (command.floorNumber != currentFloor) {
+                        while (it.floorNumber != currentFloor) {
                             when (direction) {
                                 Direction.UP -> {
                                     delay(elevatorFloorTravelDurationMs)
@@ -62,10 +64,11 @@ class BaseElevator(
                         delay(elevatorFloorTravelDurationMs)
 
                         if (additionalStops.size != 0) {
-                            commandChannel.send(Command.MoveToFloor(additionalStops.removeFirst()))
+                            moveElevator(additionalStops.removeFirst())
                         }
                     }
                 }
+
             }
         }
     }
@@ -109,7 +112,7 @@ class BaseElevator(
     }
 
     override fun moveElevator(toFloor: Int) {
-        elevatorScope.launch {
+        elevatorScope.launch(elevatorJob) {
             commandChannel.send(Command.MoveToFloor(toFloor))
         }
     }

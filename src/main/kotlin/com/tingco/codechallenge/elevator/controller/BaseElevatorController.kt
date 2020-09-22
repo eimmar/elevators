@@ -10,6 +10,7 @@ import com.tingco.codechallenge.elevator.log.ElevatorConsoleLogger
 import com.tingco.codechallenge.elevator.model.BaseElevator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BaseElevatorController(
@@ -17,10 +18,11 @@ class BaseElevatorController(
         private val floorCount: Int,
         private val elevatorFloorTravelDurationMs: Long,
         private val elevatorScope: CoroutineScope,
-        private val elevatorLogger: ElevatorConsoleLogger
+        private val elevatorLogger: ElevatorConsoleLogger,
+        private val elevatorJob: Job
 ): ElevatorController {
     override val elevators: List<BaseElevator> = (1..elevatorCount).map {
-        BaseElevator(it, elevatorFloorTravelDurationMs, elevatorScope)
+        BaseElevator(it, elevatorFloorTravelDurationMs, elevatorScope, elevatorJob)
     }
 
     init {

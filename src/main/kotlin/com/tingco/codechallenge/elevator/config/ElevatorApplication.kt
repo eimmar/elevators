@@ -6,6 +6,7 @@ import com.tingco.codechallenge.elevator.log.ElevatorConsoleLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -36,16 +37,20 @@ class ElevatorApplication {
     fun elevatorScope(): CoroutineScope = CoroutineScope(Dispatchers.Default)
 
     @Bean
-    fun elevatorLogger(): ElevatorConsoleLogger = ElevatorConsoleLogger(CoroutineScope(Dispatchers.Default))
+    fun elevatorLogger(elevatorScope: CoroutineScope): ElevatorConsoleLogger = ElevatorConsoleLogger(
+            CoroutineScope(Dispatchers.Default),
+            Job()
+    )
 
-    @Bean()
-    fun elevatorController(elevatorScope: CoroutineScope, elevatorLogger: ElevatorConsoleLogger): BaseElevatorController
+    @Bean
+    fun elevatorController(elevatorLogger: ElevatorConsoleLogger): BaseElevatorController
             = BaseElevatorController(
             elevatorCount,
             floorCount,
             elevatorFloorTravelDurationMs,
-            elevatorScope,
-            elevatorLogger
+            CoroutineScope(Dispatchers.Default),
+            elevatorLogger,
+            Job()
     )
 }
 
