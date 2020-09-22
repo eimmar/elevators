@@ -21,7 +21,7 @@ class BaseElevatorController(
         private val elevatorLogger: ElevatorConsoleLogger,
         private val elevatorJob: Job
 ): ElevatorController {
-    override val elevators: List<BaseElevator> = (1..elevatorCount).map {
+    override var elevators: List<BaseElevator> = (1..elevatorCount).map {
         BaseElevator(it, elevatorFloorTravelDurationMs, elevatorScope, elevatorJob)
     }
 
@@ -34,7 +34,7 @@ class BaseElevatorController(
             throw InvalidFloorException("Requested floor cannot be greater than $floorCount")
         }
 
-        val elevator = elevators.find { it.getDirection() == Direction.NONE }
+        val elevator = elevators.find { !it.isBusy() }
         if (elevator != null) {
             elevator.moveElevator(toFloor)
 
@@ -48,8 +48,11 @@ class BaseElevatorController(
             throw InvalidFloorException("Requested floor cannot be greater than $floorCount")
         }
 
-        val elevator = elevators.find { it.getDirection() == Direction.NONE }
+        val elevator = elevators.find { !it.isBusy() }
         if (elevator != null) {
+            // Helps testing for the sake of this challenge but otherwise it is not needed and would be removed
+            println("Found elevator with ID ${elevator.id} for request from ${request.requestedFromFloor} to ${request.toFloor}")
+
             elevator.moveElevator(request)
 
             return elevator
@@ -57,23 +60,21 @@ class BaseElevatorController(
 
         if (request.requestedFromFloor > request.toFloor) {
             val descendingElevator = elevators
-                    .filter {
-                        it.getDirection() == Direction.DOWN
-                                && it.getCurrentFloor() > request.requestedFromFloor
-                                && it.getAddressedFloor() <= request.toFloor
-                    }
+                    .filter { it.getDirection() == Direction.DOWN && it.getCurrentFloor() > request.requestedFromFloor }
                     .minByOrNull { it.getCurrentFloor() }
+
+            // Helps testing for the sake of this challenge but otherwise it is not needed and would be removed
+            println("Found descending elevator with ID ${descendingElevator?.id} for request from ${request.requestedFromFloor} to ${request.toFloor}")
 
             descendingElevator?.addAdditionalStop(request)
             return descendingElevator
         } else if (request.requestedFromFloor < request.toFloor) {
             val ascendingElevator = elevators
-                    .filter {
-                        it.getDirection() == Direction.UP
-                                && it.getCurrentFloor() < request.requestedFromFloor
-                                && it.getAddressedFloor() >= request.toFloor
-                    }
+                    .filter { it.getDirection() == Direction.UP && it.getCurrentFloor() < request.requestedFromFloor }
                     .maxByOrNull { it.getCurrentFloor() }
+
+            // Helps testing for the sake of this challenge but otherwise it is not needed and would be removed
+            println("Found ascending elevator with ID ${ascendingElevator?.id} for request from ${request.requestedFromFloor} to ${request.toFloor}")
 
             ascendingElevator?.addAdditionalStop(request)
             return ascendingElevator

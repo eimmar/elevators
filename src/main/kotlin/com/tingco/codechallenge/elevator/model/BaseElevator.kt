@@ -27,6 +27,7 @@ class BaseElevator(
     private var currentFloor: Int = 1
     private var addressedFloor: Int = 1
     private var direction: Direction = Direction.NONE
+    private var isBusy: Boolean = false
     private var additionalStops: MutableList<Int> = mutableListOf()
 
     private val commandChannel = Channel<Command>(10000)
@@ -37,10 +38,11 @@ class BaseElevator(
             commandChannel.consumeEach {
                 when (it) {
                     is Command.MoveToFloor -> {
-                        direction = if (currentFloor > it.floorNumber) Direction.DOWN else Direction.UP
+                        isBusy = true
                         addressedFloor = it.floorNumber
-
+                        direction = if (currentFloor > it.floorNumber) Direction.DOWN else Direction.UP
                         _outputChannel.send(OutputMessage.IsAtFloor(currentFloor, id))
+
                         while (it.floorNumber != currentFloor) {
                             when (direction) {
                                 Direction.UP -> {
@@ -62,13 +64,13 @@ class BaseElevator(
                         direction = Direction.NONE
                         _outputChannel.send(OutputMessage.StoppedAtFloor(currentFloor, id))
                         delay(elevatorFloorTravelDurationMs)
+                        isBusy = false
 
                         if (additionalStops.size != 0) {
                             moveElevator(additionalStops.removeFirst())
                         }
                     }
                 }
-
             }
         }
     }
@@ -90,7 +92,7 @@ class BaseElevator(
 
     override fun getDirection(): Direction = direction
     override fun getAddressedFloor(): Int = addressedFloor
-    override fun isBusy(): Boolean = direction != Direction.NONE
+    override fun isBusy(): Boolean = isBusy
     override fun getCurrentFloor(): Int = currentFloor
     override val id get() = this._id
     val outputChannel get() = _outputChannel.openSubscription()
