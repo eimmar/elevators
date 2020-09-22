@@ -1,6 +1,7 @@
 package com.tingco.codechallenge.elevator.resources
 
-import com.tingco.codechallenge.elevator.api.IElevatorController
+import ElevatorRequest
+import com.tingco.codechallenge.elevator.controller.ElevatorController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/rest/v1")
 class ElevatorControllerEndPoints {
     @Autowired
-    lateinit var elevatorController: IElevatorController
+    lateinit var elevatorController: ElevatorController
 
     /**
      * Ping service to test if we are alive.
@@ -33,9 +34,11 @@ class ElevatorControllerEndPoints {
      * @param floor Floor to request
      * @return Integer
      */
-    @RequestMapping(value = ["/request-elevator/{floor}"], method = [RequestMethod.GET])
-    fun requestElevator(@PathVariable(value = "floor") floor: Int): Int {
-        elevatorController.requestElevator(floor)
-        return floor
+    @RequestMapping(value = ["/request-elevator/{requestedFromFloor}/{toFloor}"], method = [RequestMethod.GET])
+    fun requestElevator(
+            @PathVariable(value = "requestedFromFloor") requestedFromFloor: Int,
+            @PathVariable(value = "toFloor") toFloor: Int
+    ): Int? {
+        return elevatorController.requestElevator(ElevatorRequest(requestedFromFloor, toFloor))?.id
     }
 }

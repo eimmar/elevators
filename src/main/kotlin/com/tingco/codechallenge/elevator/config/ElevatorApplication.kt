@@ -1,16 +1,14 @@
 package com.tingco.codechallenge.elevator.config
 
-import com.google.common.eventbus.AsyncEventBus
-import com.google.common.eventbus.EventBus
-import com.tingco.codechallenge.elevator.api.IElevatorController
 import com.tingco.codechallenge.elevator.controller.ElevatorController
+import com.tingco.codechallenge.elevator.log.ElevatorLogger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.*
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 
 /**
  * Preconfigured Spring Application boot class.
@@ -23,26 +21,29 @@ import java.util.concurrent.Executors
 @SpringBootApplication
 class ElevatorApplication {
     @Value("\${com.tingco.elevator.numberofelevators}")
-    private val numberOfElevators = 0
+    private val elevatorCount = 0
 
-    /**
-     * Create a default thread pool for your convenience.
-     *
-     * @return Executor thread pool
-     */
-    @Bean(destroyMethod = "shutdown")
-    fun taskExecutor(): Executor = Executors.newScheduledThreadPool(numberOfElevators)
+    @Value("\${com.tingco.elevator.numberoffloors}")
+    private val floorCount = 0
 
-    /**
-     * Create an event bus for your convenience.
-     *
-     * @return EventBus for async task execution
-     */
-    @Bean
-    fun eventBus(): EventBus = AsyncEventBus(Executors.newCachedThreadPool())
+    @Value("\${com.tingco.elevator.elevatorfloortraveldurationms}")
+    private val elevatorFloorTravelDurationMs = 0L
 
     @Bean
-    fun elevatorController(): IElevatorController = ElevatorController()
+    fun elevatorScope(): CoroutineScope = CoroutineScope(Dispatchers.Default)
+
+    @Bean
+    fun elevatorLogger(): ElevatorLogger = ElevatorLogger(CoroutineScope(Dispatchers.Default))
+
+    @Bean
+    fun elevatorController(elevatorScope: CoroutineScope, elevatorLogger: ElevatorLogger): ElevatorController
+            = ElevatorController(
+            elevatorCount,
+            floorCount,
+            elevatorFloorTravelDurationMs,
+            elevatorScope,
+            elevatorLogger
+    )
 }
 
 fun main(args: Array<String>) {
