@@ -1,7 +1,7 @@
 package com.tingco.codechallenge.elevator.resources
 
-import ElevatorRequest
-import com.tingco.codechallenge.elevator.controller.ElevatorController
+import com.tingco.codechallenge.elevator.ElevatorRequest
+import com.tingco.codechallenge.elevator.controller.BaseElevatorController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/rest/v1")
 class ElevatorControllerEndPoints {
     @Autowired
-    lateinit var elevatorController: ElevatorController
+    lateinit var elevatorController: BaseElevatorController
 
     /**
      * Ping service to test if we are alive.

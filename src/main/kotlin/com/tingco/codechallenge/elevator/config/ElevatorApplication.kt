@@ -1,9 +1,11 @@
 package com.tingco.codechallenge.elevator.config
 
-import com.tingco.codechallenge.elevator.controller.ElevatorController
-import com.tingco.codechallenge.elevator.log.ElevatorLogger
+import com.tingco.codechallenge.elevator.api.ElevatorController
+import com.tingco.codechallenge.elevator.controller.BaseElevatorController
+import com.tingco.codechallenge.elevator.log.ElevatorConsoleLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -14,6 +16,7 @@ import org.springframework.context.annotation.*
  * Preconfigured Spring Application boot class.
  *
  */
+@ExperimentalCoroutinesApi
 @Configuration
 @ComponentScan(basePackages = ["com.tingco.codechallenge.elevator"])
 @EnableAutoConfiguration
@@ -33,11 +36,11 @@ class ElevatorApplication {
     fun elevatorScope(): CoroutineScope = CoroutineScope(Dispatchers.Default)
 
     @Bean
-    fun elevatorLogger(): ElevatorLogger = ElevatorLogger(CoroutineScope(Dispatchers.Default))
+    fun elevatorLogger(): ElevatorConsoleLogger = ElevatorConsoleLogger(CoroutineScope(Dispatchers.Default))
 
-    @Bean
-    fun elevatorController(elevatorScope: CoroutineScope, elevatorLogger: ElevatorLogger): ElevatorController
-            = ElevatorController(
+    @Bean()
+    fun elevatorController(elevatorScope: CoroutineScope, elevatorLogger: ElevatorConsoleLogger): BaseElevatorController
+            = BaseElevatorController(
             elevatorCount,
             floorCount,
             elevatorFloorTravelDurationMs,
@@ -46,6 +49,7 @@ class ElevatorApplication {
     )
 }
 
+@ExperimentalCoroutinesApi
 fun main(args: Array<String>) {
     runApplication<ElevatorApplication>(*args)
 }

@@ -1,17 +1,18 @@
 package com.tingco.codechallenge.elevator.model
 
-import Direction
-import ElevatorRequest
+import com.tingco.codechallenge.elevator.ElevatorRequest
+import com.tingco.codechallenge.elevator.api.Elevator
+import com.tingco.codechallenge.elevator.api.Elevator.Direction
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
 
 @ExperimentalCoroutinesApi
-class Elevator(
-        val id: Int,
+class BaseElevator(
+        private val _id: Int,
         private val elevatorFloorTravelDurationMs: Long,
         private val elevatorScope: CoroutineScope,
-) {
+) : Elevator {
     sealed class Command {
         data class MoveToFloor(val floorNumber: Int) : Command()
     }
@@ -21,21 +22,13 @@ class Elevator(
         data class StoppedAtFloor(val floorNumber: Int, val elevatorId: Int) : OutputMessage()
     }
 
-    private val commandChannel = Channel<Command>(10000)
-
-    private val _outputChannel = BroadcastChannel<OutputMessage>(10000)
-
-    val outputChannel get() = _outputChannel.openSubscription()
-
-    var currentFloor = 1
-        private set
-
-    var addressedFloor: Int = 1
-
-    var direction = Direction.NONE
-        private set
-
+    private var currentFloor: Int = 1
+    private var addressedFloor: Int = 1
+    private var direction: Direction = Direction.NONE
     private var additionalStops: MutableList<Int> = mutableListOf()
+
+    private val commandChannel = Channel<Command>(10000)
+    private val _outputChannel = BroadcastChannel<OutputMessage>(10000)
 
     init {
         elevatorScope.launch {
@@ -52,14 +45,14 @@ class Elevator(
                                     delay(elevatorFloorTravelDurationMs)
                                     currentFloor++
                                     _outputChannel.send(OutputMessage.IsAtFloor(currentFloor, id))
-                                    stopElevatorIfNeeded()
+                                    stopIfNeeded()
                                 }
 
                                 Direction.DOWN -> {
                                     delay(elevatorFloorTravelDurationMs)
                                     currentFloor--
                                     _outputChannel.send(OutputMessage.IsAtFloor(currentFloor, id))
-                                    stopElevatorIfNeeded()
+                                    stopIfNeeded()
                                 }
                             }
                         }
@@ -77,7 +70,7 @@ class Elevator(
         }
     }
 
-    private suspend fun stopElevatorIfNeeded() {
+    private suspend fun stopIfNeeded() {
         var floorToStop: Int? = null
         if (direction == Direction.UP) {
             floorToStop = additionalStops.filter { it >= currentFloor }.minByOrNull { it }
@@ -92,6 +85,13 @@ class Elevator(
         }
     }
 
+    override fun getDirection(): Direction = direction
+    override fun getAddressedFloor(): Int = addressedFloor
+    override fun isBusy(): Boolean = direction != Direction.NONE
+    override fun getCurrentFloor(): Int = currentFloor
+    override val id get() = this._id
+    val outputChannel get() = _outputChannel.openSubscription()
+
     fun addAdditionalStop(request: ElevatorRequest) {
         additionalStops = additionalStops
                 .plus(listOf(request.requestedFromFloor, request.toFloor))
@@ -100,13 +100,17 @@ class Elevator(
     }
 
     fun moveElevator(request: ElevatorRequest) {
+        if (currentFloor == request.requestedFromFloor) {
+            moveElevator(request.toFloor)
+        } else {
+            moveElevator(request.requestedFromFloor)
+            moveElevator(request.toFloor)
+        }
+    }
+
+    override fun moveElevator(toFloor: Int) {
         elevatorScope.launch {
-            if (currentFloor == request.requestedFromFloor) {
-                commandChannel.send(Command.MoveToFloor(request.toFloor))
-            } else {
-                commandChannel.send(Command.MoveToFloor(request.requestedFromFloor))
-                commandChannel.send(Command.MoveToFloor(request.toFloor))
-            }
+            commandChannel.send(Command.MoveToFloor(toFloor))
         }
     }
 }

@@ -14,16 +14,6 @@ There are two interfaces to implement.
 
  * `ElevatorController` - this is the elevator manager that keeps track of all the elevators running in the elevator shaft. There should be only one ElevatorController
 
-### Bonus Classes
-
-There are a few classes added to get you faster up and running. It is not mandatory to use these classes in your solution but you can use them to cut time in boiler plate coding.
-
- * `ElevatorControllerEndPoints` for REST features. If you would like to use them in a test or to support a GUI here is already a basic skeleton class for you
-
- * `ElevatorApplication` class for starting the Spring container and there are a few beans you can use as well
-
- * There are two test classes added to get you up and running faster with tests and simulations
-
 ## What We Expect
 
 Implement the elevator system and make it as real as possible when it comes to the logic. Which elevator is best suited for a waiting floor, more requests than available elevators and so on.
@@ -40,15 +30,7 @@ Add the code to a github or bitbucket repository. You can also make an archive o
  
 ## Build And Run (as is)
 
-As the project is, the Spring app can be started as seen below.
-
-build and run the code with Maven
+Project can be started with
 
     mvn package
     mvn spring-boot:run
-
-or start the target JAR file 
-
-    mvn package
-    java -jar target/elevator-1.0-SNAPSHOT.jar
-
