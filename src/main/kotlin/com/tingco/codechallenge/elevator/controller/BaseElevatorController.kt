@@ -8,29 +8,24 @@ import com.tingco.codechallenge.elevator.exception.ElevatorNotFoundException
 import com.tingco.codechallenge.elevator.exception.InvalidFloorException
 import com.tingco.codechallenge.elevator.log.ElevatorConsoleLogger
 import com.tingco.codechallenge.elevator.model.BaseElevator
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BaseElevatorController(
-        elevatorCount: Int,
+        override val elevators: List<BaseElevator>,
         private val floorCount: Int,
-        private val elevatorFloorTravelDurationMs: Long,
-        private val elevatorScope: CoroutineScope,
         private val elevatorLogger: ElevatorConsoleLogger,
-        private val elevatorJob: Job
 ): ElevatorController {
-    override var elevators: List<BaseElevator> = (1..elevatorCount).map {
-        BaseElevator(it, elevatorFloorTravelDurationMs, elevatorScope, elevatorJob)
-    }
-
     init {
         elevators.forEach { elevatorLogger.subscribeTo(it.outputChannel) }
     }
 
+    private fun isRequestValid(request: ElevatorRequest) =
+            !(request.toFloor > floorCount || request.toFloor < 1)
+                    && !(request.requestedFromFloor > floorCount || request.requestedFromFloor < 1)
+
     override fun requestElevator(toFloor: Int): Elevator {
-        if (toFloor > floorCount) {
+        if (toFloor > floorCount || toFloor < 1) {
             throw InvalidFloorException("Requested floor cannot be greater than $floorCount")
         }
 
@@ -44,10 +39,12 @@ class BaseElevatorController(
     }
 
     fun requestElevator(request: ElevatorRequest): Elevator? {
-        if (request.toFloor > floorCount) {
+        if (!isRequestValid(request)) {
             throw InvalidFloorException("Requested floor cannot be greater than $floorCount")
         }
 
+        //TODO: Instead of always looking for free elevators first check for available elevator that are moving the same
+        // direction as requested
         val elevator = elevators.find { !it.isBusy() }
         if (elevator != null) {
             // Helps testing for the sake of this challenge but otherwise it is not needed and would be removed

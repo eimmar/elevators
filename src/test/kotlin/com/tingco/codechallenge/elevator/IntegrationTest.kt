@@ -1,8 +1,10 @@
 package com.tingco.codechallenge.elevator
 
+import com.tingco.codechallenge.elevator.api.Elevator
 import com.tingco.codechallenge.elevator.config.ElevatorApplication
 import com.tingco.codechallenge.elevator.controller.BaseElevatorController
 import com.tingco.codechallenge.elevator.log.ElevatorConsoleLogger
+import com.tingco.codechallenge.elevator.model.BaseElevator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.jupiter.api.Test
@@ -15,6 +17,7 @@ import kotlin.test.assertTrue
  *
  * @author Sven Wesley
  */
+@ExperimentalCoroutinesApi
 @SpringBootTest(classes = [ElevatorApplication::class])
 class IntegrationTest {
     // Since the purpose of this test is to simulate elevatorController
@@ -27,17 +30,14 @@ class IntegrationTest {
 
     @Value("\${com.tingco.elevator.elevatorfloortraveldurationms}")
     private val elevatorFloorTravelDurationMs = 0L
-    @ExperimentalCoroutinesApi
+
     @Test
     fun simulateLoadedElevatorShaft() = runBlockingTest {
         val job = Job()
         val elevatorController = BaseElevatorController(
-                elevatorCount,
+                (1..elevatorCount).map { BaseElevator(it, elevatorFloorTravelDurationMs, this, job) },
                 floorCount,
-                elevatorFloorTravelDurationMs,
-                this,
                 ElevatorConsoleLogger(this, job),
-                job
         )
 
         val elevatorRequests: List<Pair<Long, ElevatorRequest>> = (1..elevatorCount).map {
@@ -57,9 +57,8 @@ class IntegrationTest {
             elevatorController.requestElevator(it.second)
         }
 
-        assertTrue { true }
-//        assertTrue { elevatorController.elevators.map { it.getDirection() }.all { it == Elevator.Direction.UP } }
         advanceTimeBy(elevatorFloorTravelDurationMs * elevatorRequests.size * 10)
+        assertTrue { elevatorController.elevators.map { it.getDirection() }.all { it == Elevator.Direction.NONE } }
 
         job.cancelAndJoin()
         cleanupTestCoroutines()

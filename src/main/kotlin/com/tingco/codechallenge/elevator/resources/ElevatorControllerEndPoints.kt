@@ -29,11 +29,6 @@ class ElevatorControllerEndPoints {
         return "pong"
     }
 
-    /**
-     *
-     * @param floor Floor to request
-     * @return Integer
-     */
     @RequestMapping(value = ["/request-elevator/{requestedFromFloor}/{toFloor}"], method = [RequestMethod.GET])
     fun requestElevator(
             @PathVariable(value = "requestedFromFloor") requestedFromFloor: Int,

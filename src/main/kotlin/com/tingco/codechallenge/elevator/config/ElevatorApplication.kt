@@ -1,8 +1,8 @@
 package com.tingco.codechallenge.elevator.config
 
-import com.tingco.codechallenge.elevator.api.ElevatorController
 import com.tingco.codechallenge.elevator.controller.BaseElevatorController
 import com.tingco.codechallenge.elevator.log.ElevatorConsoleLogger
+import com.tingco.codechallenge.elevator.model.BaseElevator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,20 +37,22 @@ class ElevatorApplication {
     fun elevatorScope(): CoroutineScope = CoroutineScope(Dispatchers.Default)
 
     @Bean
+    fun elevators(elevatorScope: CoroutineScope): List<BaseElevator> = (1..elevatorCount).map {
+        BaseElevator(it, elevatorFloorTravelDurationMs, elevatorScope, Job())
+    }
+
+    @Bean
     fun elevatorLogger(elevatorScope: CoroutineScope): ElevatorConsoleLogger = ElevatorConsoleLogger(
             CoroutineScope(Dispatchers.Default),
             Job()
     )
 
     @Bean
-    fun elevatorController(elevatorLogger: ElevatorConsoleLogger): BaseElevatorController
+    fun elevatorController(elevatorLogger: ElevatorConsoleLogger, elevators: List<BaseElevator>): BaseElevatorController
             = BaseElevatorController(
-            elevatorCount,
+            elevators,
             floorCount,
-            elevatorFloorTravelDurationMs,
-            CoroutineScope(Dispatchers.Default),
             elevatorLogger,
-            Job()
     )
 }
 

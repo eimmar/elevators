@@ -30,8 +30,8 @@ class BaseElevator(
     private var isBusy: Boolean = false
     private var additionalStops: MutableList<Int> = mutableListOf()
 
-    private val commandChannel = Channel<Command>(10000)
-    private val _outputChannel = BroadcastChannel<OutputMessage>(10000)
+    private val commandChannel = Channel<Command>(10)
+    private val _outputChannel = BroadcastChannel<OutputMessage>(10)
 
     init {
         elevatorScope.launch(elevatorJob) {
